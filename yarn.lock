@@ -7,6 +7,11 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-17.0.17.tgz#a8ddf6e0c2341718d74ee3dc413a13a042c45a0c"
   integrity sha512-e8PUNQy1HgJGV3iU/Bp2+D/DXh3PYeyli8LgIwsQcs1Ar1LoaWHSIT6Rw+H2rNJmiq6SNWiDytfx8+gYj7wDHw==
 
+ariadb@^2.0.2:
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/ariadb/-/ariadb-2.0.2.tgz#432b744bca65b51f696f7c0e1ecb86f9e0d02c06"
+  integrity sha512-7lqB8h7F7eherW/uTisMWVf+gRYo1M7vaSLUPpv0WzF2YACnPtmZlpc+lhbmT6d4vI9Q7fnGkhmEMaI7BWaWew==
+
 typescript@^4.5.5:
   version "4.5.5"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.5.5.tgz#d8c953832d28924a9e3d37c73d729c846c5896f3"
