@@ -1,13 +1,7 @@
-import AriaDB from './dist';
+import AriaDB from '.';
 
-interface Persona {
-  name: string;
-  age: number;
-  country: {
-    name: string;
-    code: string;
-  };
-}
+const db = new AriaDB('db.json');
 
-const db = AriaDB<Persona>('db.json');
-db.defaults({ name: 'nose' } as any);
+const res = db.remove('address.city', 'London');
+
+console.log(res);

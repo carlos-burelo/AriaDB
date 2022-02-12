@@ -1,99 +1,52 @@
+![Overview](./overview.png)
+
 # AriaDB
 
-AriaDB is a minimalist and simple open source project for modeling local databases based on a JSON file in order to reduce the need to use an external database or require another server to store the information.
+AriaDB is a database manager based on a JSON file with a minimalist API with useful methods to manage information in a simple way.
 
-The project has a simple and practical API which has allowed it to be extremely light weighing less than 10kb.
+## Features
 
-## Install
+- **Simple**: It is easy to use and understand.
+- **Lightweight**: It is very lightweight and fast.
+- **Secure**: It is secure and easy to use.
+- **Powerful**: It is powerful and easy to use.
+- **Open-source**: It is open-source and free to use.
+
+## Installation
+
+- Download the latest version of the source from [GitHub](https://gihub.com/carlos-burelo/AriaDB).
 
 ```bash
-# using npm
+# install using npm
 npm install ariadb
 
-#usin yarn
+# install using yarn
 yarn add ariadb
 ```
 
 ## Usage
 
-```js
+To use AriaDB we simply need to create an instance of the AriaDB class which is exported by default from 'ariadb'
+
+```javascript
+// With ES5 syntax
+const AriaDB = require('ariadb');
+// With ES6 syntax
 import AriaDB from 'ariadb';
 
-const db = AriaDB('/path/to/db.json');
+// Create an instance of the AriaDB class
+// and pass the path to the database file
+const db = new AriaDB('path/to/database.json');
 
-//
-db.defaults({
-  users: [],
-  posts: [],
-  comments: [],
-});
-
-const users = db.get('users');
-```
-
-> Generate a new database file:db.json
-
-```json
-{
-  "users": [],
-  "posts": [],
-  "comments": [],
-  "admin": {
-    "username": "admin",
-    "password": "admin"
-  }
-}
-```
-
-## Get
-
-Get users list from database
-
-```ts
-const users = db.get('users');
-```
-
-## Set
-
-```ts
-db.set('users', [
-  {
-    id: 1,
-    name: 'John Doe',
-  },
-]);
-```
-
-## Push
-
-```ts
-db.push('users', {
-  id: 1,
-  name: 'John Doe',
-});
-```
-
-## Remove
-
-```ts
-db.remove('users', {
-  id: 1,
-});
-```
-
-## delete
-
-```ts
-// if the value does not exist, then the first
-// level property of the object is removed
-db.delete('users');
-// or
-db.delete('admin', 'username');
-```
-
-## Save
-
-```ts
-// force save the database
-db.save();
+// and then we can use the methods
+db.get('key'); // returns the value of the key
+db.set('key', 'value'); // sets the value of the key
+db.remove('key', { id: 1 }); // removes the key from arrays
+db.delete('key'); // removes the key from objects and nested objects
+db.push('key', { id: 1 }); // adds a new item to arrays
+db.has('key'); // returns true if the key exists and false otherwise
+db.query('key', ['id', 'name']); // returns keys from objects
+db.toggle('key', true); // toggles the value of the key
+// for nested objects and arrays use dot notation
+db.toggle('key.nested.key', true);
 ```

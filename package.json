@@ -2,14 +2,11 @@
   "name": "ariadb",
   "version": "2.0.2",
   "license": "MIT",
-  "main": "dist/index.js",
-  "module": "dist/index.esm.js",
+  "main": "dist/ariadb.js",
   "types": "dist/index.d.js",
   "scripts": {
-    "build": "yarn build:cjs && yarn build:esm && yarn min",
-    "build:cjs": "tsc -p tsconfig.cjs.json",
-    "build:esm": "tsc -p tsconfig.esm.json",
-    "min": "uglifyjs dist/esm/index.js -c -m -o dist/index.esm.js && uglifyjs dist/cjs/index.js -c -m -o dist/index.js",
+    "build": "tsc && yarn min",
+    "min": "uglifyjs dist/index.js -c -m -o dist/ariadb.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -17,8 +14,7 @@
     "url": "git+https://github.com/carlos-burelo/ariadb.git"
   },
   "files": [
-    "dist/cjs",
-    "dist/esm"
+    "dist"
   ],
   "keywords": [
     "database",

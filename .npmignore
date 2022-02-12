@@ -3,9 +3,5 @@ src
 test.ts
 tsconfig.json
 db.json
-/dist/cjs
-/dist/esm
-/dist/temp
 README.md
-tsconfig.cjs.json
-tsconfig.esm.json
+dist/index.js
