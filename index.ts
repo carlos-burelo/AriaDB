@@ -1,208 +1,139 @@
-import { readFileSync, writeFileSync, existsSync as exist } from 'fs';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs'
 
-export interface AriaDBInterface {
-  /**
-   * @param {string} path - The path to the value separated by dots
-   * @example
-   * db.get('user.name');
-   * // use numbers as index for arrays
-   * db.get('user.hobbies.0');
-   */
-  get: (path: string) => any;
-  /**
-   * @param {string} path - The path to the value separated by dots
-   * @param {any} value - The value to set
-   * @example
-   * db.set('user.name', 'Carlos');
-   * // use numbers as index for arrays
-   * db.set('user.hobbies.0', 'Programming');
-   */
-  set: (path: string, value: any) => void;
-  /**
-   * @description Check if the value in the path exists and return true or false
-   * @param {string} path - The path to the value separated by dots
-   * @example
-   * db.has('user.name');
-   * // use numbers as index for arrays
-   * db.has('user.hobbies.0');
-   * @returns {boolean}
-   */
-  has: (path: string) => boolean;
-  /**
-   * @param {string} path - The path to the value separated by dots
-   * @example
-   * // delete method is not supported for arrays
-   * db.delete('user.name');
-   * @returns {boolean}
-   */
-  delete: (path: string) => boolean;
-  /**
-   * @param {string} path - The path to the value separated by dots
-   * @param {any} value - The value to remove
-   * @example
-   * db.remove('user.hobbies', 'Programming');
-   * // use props for arrays of objects
-   * db.remove('user.hobbies', { name: 'Programming' });
-   * @returns {boolean}
-   */
-  remove: (path: string, value: any) => boolean;
-  /**
-   * @description This method returns only the properties required in `values`
-   * in the object obtained in the path, if it is an array, it returns only the
-   * properties of the elements
-   * @param {string} path - The path to the value separated by dots
-   * @param {string[]} value - The value to update
-   * @example
-   * db.query('user', ['name', 'age', 'hobbies']);
-   * // expected outpu:  { name: 'Carlos', age: 30, hobbies: ['Programming', 'Cooking'] }
-   */
-  query: (path: string, values: string[]) => any;
-  /**
-   * @param {string} path - The path to the value separated by dots
-   * @param {string[]} values - The value to add to the array
-   * @example
-   * db.push('user.hobbies', 'Programming');
-   * // use props for arrays of objects
-   * db.push('user.hobbies', { name: 'Programming' });
-   */
-  push: (path: string, value: any) => boolean;
-  /**
-   * @description Este metodo busca que el objeto obtenido del path exista e
-   * invierte el valor del mismo, si es true asigna false y viceversa.
-   * Si value no existe, entonces invertira el valor del objeto.
-   * Si value existe, entonces invertira el valor del mismo en base al valor proporsionado.
-   *
-   * @param {string} path - The path to the value separated by dots
-   * @param {boolean} [value] - The value to set manually
-   * @example
-   * db.toggle('user.active'); // reverse the value of user.active
-   */
-  toggle: (path: string, value?: boolean) => boolean | undefined;
-}
-function read<Schema>(filePath: string): Schema {
-  if (!exist(filePath)) writeFileSync(filePath, '{}', 'utf-8');
-  const data = readFileSync(filePath, 'utf-8');
-  try {
-    return JSON.parse(data);
-  } catch (error) {
-    throw new Error('The file is not a valid JSON');
+type JSONType = string | number | boolean | null | undefined | JSONType[] | { [key: string]: JSONType }
+
+export class AriaDB<T> {
+  #state: T
+
+  #write (filePath: string, data: any): void {
+    writeFileSync(filePath, JSON.stringify(data, null, 0), 'utf-8')
   }
-}
-function write(filePath: string, data: any): void {
-  if (typeof data !== 'string') {
+
+  #exist (filePath: string): boolean {
+    return existsSync(filePath)
+  }
+
+  #read (filePath: string): T {
+    const payload = readFileSync(filePath, 'utf-8')
     try {
-      data = JSON.stringify(data, null, 0);
+      return JSON.parse(payload)
     } catch (error) {
-      throw new Error("Can't write the data");
+      throw new Error('The file is not a valid JSON')
     }
   }
-  return writeFileSync(filePath, data, 'utf-8');
-}
-export default class AriaDB<Custom> implements AriaDBInterface {
-  #state: Custom = {} as Custom;
-  constructor(private filePath: string) {
-    if (!exist(filePath)) write(filePath, '{}');
-    this.#state = read<Custom>(filePath);
+
+  constructor (private readonly filePath: string) {
+    const exist = this.#exist(filePath)
+    if (!exist) this.#write(filePath, '{}')
+    this.#state = this.#read(filePath)
   }
-  get(path: string) {
-    const pt = path.split('.');
-    let value = this.#state;
+
+  get<V> (path: V | keyof T): T | undefined {
+    const pt = (path as string).toString().split('.')
+    let value = this.#state
     for (let i = 0; i < pt.length; i++) {
-      value = (value as any)[pt[i]];
-      if (value === undefined) return undefined;
+      value = (value as any)[pt[i]]
+      if (value === undefined) return undefined
     }
-    return value;
+    return value
   }
-  set(path: string, value: any) {
-    const obj = this.get(path);
-    if (obj === undefined) return false;
-    const keys = path.split('.');
-    const lastKey: any = keys.pop();
-    const lastState = keys.reduce((acc: any, key) => acc[key], this.#state);
+
+  set<V> (path: V | keyof T, value: JSONType): boolean {
+    const obj = this.get(path)
+    if (obj === undefined) return false
+    const keys = (path as string).toString().split('.')
+    const lastKey: any = keys.pop()
+    const lastState = keys.reduce((acc: any, key) => acc[key], this.#state)
     if (Array.isArray(obj)) {
-      lastState[lastKey].push(value);
+      lastState[lastKey].push(value)
     } else {
-      lastState[lastKey] = value;
+      lastState[lastKey] = value
     }
-    write(this.filePath, this.#state);
-    return true;
+    this.#write(this.filePath, this.#state)
+    return true
   }
-  has(path: string): boolean {
-    const value = this.get(path);
-    return value !== undefined;
+
+  has<V> (path: V | keyof T): boolean {
+    const value = this.get(path)
+    return value !== undefined
   }
-  delete(path: string): boolean {
-    const obj = this.get(path);
-    if (obj === undefined) return false;
-    const keys = path.split('.');
+
+  remove<V> (path: V | keyof T): boolean {
+    // remove property of object
+    const obj = this.get(path)
+    if (obj === undefined) return false
+    const keys = (path as string).toString().split('.')
     if (keys.length === 1) {
-      delete (this.#state as any)[keys[0]];
-      write(this.filePath, this.#state);
-      return true;
-    }
-    const lastKey: any = keys.pop();
-    const lastState = keys.reduce((acc: any, key) => acc[key], this.#state);
-    delete lastState[lastKey];
-    write(this.filePath, this.#state);
-    return true;
-  }
-  remove(path: string, value: any): boolean {
-    const obj = this.get(path);
-    if (obj === undefined) return false;
-    if (Array.isArray(obj)) {
-      const index = obj.findIndex((item: any) => item === value);
-      if (index === -1) return false;
-      obj.splice(index, 1);
+      delete (this.#state as any)[keys[path]]
+      this.#write(this.filePath, this.#state)
+      return true
     } else {
-      for (const key in obj) {
-        if (obj[key] === value) {
-          delete obj[key];
-          break;
-        }
+      // remove value of array
+      const lastKey: any = keys.pop()
+      const lastState = keys.reduce((acc: any, key) => acc[key], this.#state)
+      const index = lastState[lastKey].indexOf(obj)
+      if (index > -1) {
+        lastState[lastKey].splice(index, 1)
+        this.#write(this.filePath, this.#state)
+        return true
       }
     }
-    write(this.filePath, this.#state);
-    return true;
+    return false
   }
-  query(path: string, values: string[]): any {
-    const obj = this.get(path);
-    if (obj === undefined) return undefined;
-    if (Array.isArray(obj)) {
-      const array = obj.filter((item: any) => {
-        return values.some((key: string) => item[key] !== undefined);
-      });
-      return array.map((item: any) => {
-        const res: any = {};
-        values.forEach((key: string) => {
-          res[key] = item[key];
-        });
-        return res;
-      });
-    }
-    const res: any = {};
-    for (const key in obj) {
-      if (values.includes(key)) {
-        res[key] = obj[key];
+
+  delete<V> (path: V | keyof T): boolean {
+    // remove property of array
+    const obj = this.get(path)
+    if (obj === undefined) return false
+    const keys = (path as string).toString().split('.')
+    if (keys.length === 1) {
+      delete (this.#state as any)[keys[0]]
+      this.#write(this.filePath, this.#state)
+      return true
+    } else {
+      // remove value of array
+      const lastKey: any = keys.pop()
+      const lastState = keys.reduce((acc: any, key) => acc[key], this.#state)
+      const index = lastState[lastKey].indexOf(obj)
+      if (index > -1) {
+        lastState[lastKey].splice(index, 1)
+        this.#write(this.filePath, this.#state)
+        return true
       }
     }
-    return res;
+    return false
   }
-  push(path: string, value: any): boolean {
-    const obj = this.get(path);
-    if (obj === undefined) return false;
-    this.set(path, value);
-    return true;
+
+  push<V> (path: V | keyof T, value: JSONType): boolean {
+    const obj = this.get(path)
+    if (obj === undefined) return false
+    const keys = (path as string).toString().split('.')
+    const lastKey: any = keys.pop()
+    const lastState = keys.reduce((acc: any, key) => acc[key], this.#state)
+    lastState[lastKey].push(value)
+    this.#write(this.filePath, this.#state)
+    return true
   }
-  toggle(path: string, value?: boolean | undefined): boolean | undefined {
-    const obj = this.get(path);
-    if (obj === undefined) return undefined;
-    if (typeof obj !== 'boolean') return undefined;
-    if (!value) {
-      this.set(path, !obj);
-      return !obj;
-    } else {
-      this.set(path, value);
-      return value;
-    }
+
+  clear (): void {
+    this.#state = {}
+    this.#write(this.filePath, this.#state)
+  }
+
+  query (path: string, fn: Function): object | undefined {
+    const obj = this.get(path)
+    if (obj === undefined) return undefined
+    return fn(obj)
+  }
+
+  toogle<V> (path: V | keyof T): boolean {
+    const obj = this.get(path)
+    if (obj === undefined) return false
+    const keys = (path as string).toString().split('.')
+    const lastKey: any = keys.pop()
+    const lastState = keys.reduce((acc: any, key) => acc[key], this.#state)
+    lastState[lastKey] = !(lastState[lastKey])
+    this.#write(this.filePath, this.#state)
+    return true
   }
 }
